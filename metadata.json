@@ -1,0 +1,6 @@
+{
+  "name": "ShiftCap - 40-Hour Work Week Clock-Out Countdown",
+  "description": "Smart time management and clock-out countdown app that calculates your exact departure time before reaching 40 hours, with programmable work weeks, lunch tracking, and real-time live seconds countdown.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

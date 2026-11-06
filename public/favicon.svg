@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Dark titanium rounded squircle -->
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="url(#bgGrad)" stroke="#334155" stroke-width="2" />
+  
+  <!-- Outer glowing clock track -->
+  <circle cx="64" cy="64" r="46" fill="none" stroke="#1e293b" stroke-width="6" />
+  <circle cx="64" cy="64" r="46" fill="none" stroke="url(#ringGrad)" stroke-width="6" stroke-dasharray="210 80" stroke-linecap="round" filter="url(#glow)" />
+  
+  <!-- Dial ticks -->
+  <circle cx="64" cy="24" r="3" fill="#10b981" />
+  <circle cx="104" cy="64" r="3" fill="#10b981" />
+  <circle cx="64" cy="104" r="3" fill="#10b981" />
+  <circle cx="24" cy="64" r="3" fill="#10b981" />
+
+  <!-- Clock hands pointing to departure (e.g. ~3:45) -->
+  <!-- Hour hand -->
+  <line x1="64" y1="64" x2="88" y2="76" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+  <!-- Minute hand -->
+  <line x1="64" y1="64" x2="94" y2="44" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" filter="url(#glow)" />
+  <!-- Center pin -->
+  <circle cx="64" cy="64" r="5" fill="#f8fafc" />
+  <circle cx="64" cy="64" r="2.5" fill="#0f172a" />
+</svg>
