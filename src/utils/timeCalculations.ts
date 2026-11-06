@@ -288,3 +288,160 @@ export function getWorkWeekDayStatus(startDay: string, todayDate: Date = new Dat
     isLastDay,
   };
 }
+
+export interface RequiredLunchResult {
+  hasPunchIn: boolean;
+  hasLeaveTime: boolean;
+  desiredLeaveTime24: string;
+  desiredLeaveTime12: string;
+  elapsedMinutes: number;
+  neededTodayMinutes: number;
+  requiredLunchMinutes: number;
+  formattedLunchDuration: string;
+  status: 'feasible' | 'too_early' | 'exact_zero' | 'missing_punch_in' | 'missing_leave_time';
+  deficitMinutes: number;
+  suggestedLunchIn12h: string | null;
+  suggestedLunchIn24h: string | null;
+}
+
+/**
+ * Calculates how long of a lunch is required to leave at a desired departure time.
+ */
+export function calculateRequiredLunchForDesiredLeave(
+  punchInStr: string,
+  priorHours: number,
+  targetWeeklyHours: number,
+  desiredLeaveTimeStr: string,
+  lunchOutStr?: string
+): RequiredLunchResult {
+  const punchInSec = timeStringToSeconds(punchInStr);
+  const desiredLeaveSec = timeStringToSeconds(desiredLeaveTimeStr);
+  const lunchOutSec = lunchOutStr ? timeStringToSeconds(lunchOutStr) : null;
+
+  const secondsNeededToday = Math.max(0, (targetWeeklyHours - priorHours) * 3600);
+  const neededTodayMinutes = Math.round(secondsNeededToday / 60);
+
+  if (!punchInSec) {
+    return {
+      hasPunchIn: false,
+      hasLeaveTime: !!desiredLeaveSec,
+      desiredLeaveTime24: desiredLeaveTimeStr || '--:--',
+      desiredLeaveTime12: desiredLeaveSec ? secondsTo12HourString(desiredLeaveSec, false) : '--:--',
+      elapsedMinutes: 0,
+      neededTodayMinutes,
+      requiredLunchMinutes: 0,
+      formattedLunchDuration: '--',
+      status: 'missing_punch_in',
+      deficitMinutes: 0,
+      suggestedLunchIn12h: null,
+      suggestedLunchIn24h: null,
+    };
+  }
+
+  if (!desiredLeaveSec) {
+    return {
+      hasPunchIn: true,
+      hasLeaveTime: false,
+      desiredLeaveTime24: '--:--',
+      desiredLeaveTime12: '--:--',
+      elapsedMinutes: 0,
+      neededTodayMinutes,
+      requiredLunchMinutes: 0,
+      formattedLunchDuration: '--',
+      status: 'missing_leave_time',
+      deficitMinutes: 0,
+      suggestedLunchIn12h: null,
+      suggestedLunchIn24h: null,
+    };
+  }
+
+  // Calculate elapsed time from punchIn to desired leave
+  let elapsedSec = desiredLeaveSec - punchInSec;
+  if (elapsedSec <= 0) {
+    // Leave time is earlier than or equal to punch in (e.g. typed 07:00 when in at 08:00)
+    return {
+      hasPunchIn: true,
+      hasLeaveTime: true,
+      desiredLeaveTime24: desiredLeaveTimeStr,
+      desiredLeaveTime12: secondsTo12HourString(desiredLeaveSec, false),
+      elapsedMinutes: 0,
+      neededTodayMinutes,
+      requiredLunchMinutes: 0,
+      formattedLunchDuration: '0 mins',
+      status: 'too_early',
+      deficitMinutes: neededTodayMinutes,
+      suggestedLunchIn12h: null,
+      suggestedLunchIn24h: null,
+    };
+  }
+
+  const elapsedMinutes = Math.round(elapsedSec / 60);
+  const requiredLunchSec = elapsedSec - secondsNeededToday;
+  const requiredLunchMinutes = Math.round(requiredLunchSec / 60);
+
+  let formattedLunchDuration = '';
+  if (requiredLunchMinutes >= 60) {
+    const h = Math.floor(requiredLunchMinutes / 60);
+    const m = requiredLunchMinutes % 60;
+    formattedLunchDuration = m === 0 ? `${h} hr` : `${h}h ${m}m`;
+  } else {
+    formattedLunchDuration = `${requiredLunchMinutes} mins`;
+  }
+
+  let suggestedLunchIn12h: string | null = null;
+  let suggestedLunchIn24h: string | null = null;
+  if (lunchOutSec !== null && requiredLunchSec >= 0) {
+    const suggestedInSec = lunchOutSec + requiredLunchSec;
+    suggestedLunchIn24h = secondsToTimeString(suggestedInSec);
+    suggestedLunchIn12h = secondsTo12HourString(suggestedInSec, false);
+  }
+
+  if (requiredLunchMinutes < 0) {
+    return {
+      hasPunchIn: true,
+      hasLeaveTime: true,
+      desiredLeaveTime24: desiredLeaveTimeStr,
+      desiredLeaveTime12: secondsTo12HourString(desiredLeaveSec, false),
+      elapsedMinutes,
+      neededTodayMinutes,
+      requiredLunchMinutes,
+      formattedLunchDuration: `${Math.abs(requiredLunchMinutes)} mins short`,
+      status: 'too_early',
+      deficitMinutes: Math.abs(requiredLunchMinutes),
+      suggestedLunchIn12h: null,
+      suggestedLunchIn24h: null,
+    };
+  }
+
+  if (requiredLunchMinutes === 0) {
+    return {
+      hasPunchIn: true,
+      hasLeaveTime: true,
+      desiredLeaveTime24: desiredLeaveTimeStr,
+      desiredLeaveTime12: secondsTo12HourString(desiredLeaveSec, false),
+      elapsedMinutes,
+      neededTodayMinutes,
+      requiredLunchMinutes: 0,
+      formattedLunchDuration: '0 minutes (No lunch)',
+      status: 'exact_zero',
+      deficitMinutes: 0,
+      suggestedLunchIn12h,
+      suggestedLunchIn24h,
+    };
+  }
+
+  return {
+    hasPunchIn: true,
+    hasLeaveTime: true,
+    desiredLeaveTime24: desiredLeaveTimeStr,
+    desiredLeaveTime12: secondsTo12HourString(desiredLeaveSec, false),
+    elapsedMinutes,
+    neededTodayMinutes,
+    requiredLunchMinutes,
+    formattedLunchDuration,
+    status: 'feasible',
+    deficitMinutes: 0,
+    suggestedLunchIn12h,
+    suggestedLunchIn24h,
+  };
+}

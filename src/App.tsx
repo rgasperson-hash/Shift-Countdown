@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { TopOutput } from './components/TopOutput';
 import { AllInputsBox } from './components/AllInputsBox';
 import { CalculatedInsights } from './components/CalculatedInsights';
+import { LunchPlannerBox } from './components/LunchPlannerBox';
 import { 
   WorkWeekConfig as WorkWeekConfigType, 
   ShiftPunches as ShiftPunchesType 
@@ -121,6 +122,14 @@ export default function App() {
     }
   };
 
+  const handleApplyLunch = (lunchMinutes: number, suggestedLunchIn?: string) => {
+    setPunches((prev) => ({
+      ...prev,
+      plannedLunchMinutes: lunchMinutes,
+      ...(suggestedLunchIn ? { lunchIn: suggestedLunchIn } : {}),
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-safe">
       {/* Header with sound toggle and day status */}
@@ -133,7 +142,7 @@ export default function App() {
         dayIndex={weekStatus.dayIndex}
       />
 
-      {/* Main Container - Structured into the 3 clear sections requested */}
+      {/* Main Container - Structured into the clear sections requested */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-7 space-y-5">
         {/* 1. TOP SECTION: Countdown and Time to Punch Out */}
         <TopOutput 
@@ -150,18 +159,25 @@ export default function App() {
           currentTime={currentTime}
         />
 
-        {/* 3. BOTTOM SECTION: All other calculated information & tools */}
+        {/* 3. CALCULATED DETAILS & TIMELINE */}
         <CalculatedInsights
           calc={calc}
           punches={punches}
           config={config}
         />
 
+        {/* 4. BOTTOM BOX: Target Departure & Required Lunch Calculator */}
+        <LunchPlannerBox
+          punches={punches}
+          config={config}
+          onApplyLunch={handleApplyLunch}
+        />
+
         {/* Footer */}
         <footer className="text-center text-xs text-slate-500 pt-3 pb-6 space-y-1">
           <p>ShiftCap · 40-Hour Work Week Clock-Out Countdown</p>
           <p className="text-[11px] text-slate-600">
-            Work Week: {config.startDay} through {config.endDay} · Tap the app icon in the header for iOS install guide
+            Work Week: {config.startDay} through {config.endDay} · Reverse lunch calculator active
           </p>
         </footer>
       </main>
